@@ -1,0 +1,59 @@
+import heapq
+class Node:
+    def __init__(self, region, parent=None, g=0, h=0, color=None):
+        self.region = region  
+        self.parent = parent  
+        self.g = g            
+        self.h = h            
+        self.color = color    
+    def __lt__(self, other):
+        return (self.g + self.h) < (other.g + other.h)
+def graph_coloring(regions, adjacency_map, colors):
+    open_list = []
+    closed_list = set()
+    start_node = Node(regions[0]) 
+    heapq.heappush(open_list, start_node)
+    while open_list:
+        current_node = heapq.heappop(open_list)
+        if current_node.region == regions[-1]:
+            return construct_solution(current_node)  # Solution found
+        closed_list.add(current_node.region)
+        for neighbor in adjacency_map[current_node.region]:
+            if neighbor in closed_list:
+                continue
+            g_score = current_node.g + 1  # Assuming uniform cost
+            h_score = calculate_heuristic(neighbor, regions[-1])
+            child_color = select_color(colors, current_node.color)
+            child = Node(neighbor, current_node, g_score, h_score, child_color)
+
+            heapq.heappush(open_list, child)
+
+    return "No valid coloring found"
+
+def construct_solution(node):
+    solution = []
+    while node:
+        solution.append((node.region, node.color))
+        node = node.parent
+    return solution[::-1]  
+
+def calculate_heuristic(region, goal_region):
+    return abs(region - goal_region)
+
+def select_color(colors, previous_color):
+    for color in colors:
+        if color != previous_color:
+            return color
+    return None  # No available colors left
+regions = [1, 2, 3, 4, 5]  # Example regions
+adjacency_map = {
+    1: [2, 3],
+    2: [1, 3, 4],
+    3: [1, 2, 4, 5],
+    4: [2, 3, 5],
+    5: [3, 4]
+}
+colors = ['Red', 'Green', 'Blue']  # Example colors
+
+solution = graph_coloring(regions, adjacency_map, colors)
+print("Solution:", solution)
