@@ -1,0 +1,42 @@
+import random
+
+def hill_climbing(problem, max_iter=1000):
+    current_state = problem.initial_state()
+    for _ in range(max_iter):
+        neighbors = problem.neighbors(current_state)
+        if not neighbors:
+            break  # If no neighbors, stop
+        next_state = max(neighbors, key=lambda state: problem.heuristic(state))
+        if problem.heuristic(next_state) <= problem.heuristic(current_state):
+            break  # If no better neighbor, stop
+        current_state = next_state
+    return current_state
+
+class Problem:
+    def initial_state(self):
+        raise NotImplementedError("initial_state method must be implemented")
+
+    def neighbors(self, state):
+        raise NotImplementedError("neighbors method must be implemented")
+
+    def heuristic(self, state):
+        raise NotImplementedError("heuristic method must be implemented")
+
+# Example usage:
+
+class ExampleProblem(Problem):
+    def __init__(self):
+        self.goal_state = 0
+
+    def initial_state(self):
+        return random.randint(-10, 10)
+
+    def neighbors(self, state):
+        return [state - 1, state + 1]
+
+    def heuristic(self, state):
+        return abs(state - self.goal_state)
+
+problem = ExampleProblem()
+solution = hill_climbing(problem)
+print("Solution:", solution)
