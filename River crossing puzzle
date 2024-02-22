@@ -1,57 +1,107 @@
-def is_valid_state(state):
-    # Check if the state is valid (no more cannibals than missionaries on either side)
-    for side in state:
-        missionaries, cannibals = side
-        if missionaries < 0 or cannibals < 0 or (cannibals > missionaries > 0):
+class State:
+    def __init__(self, missionaries_left, cannibals_left, boat_left, missionaries_right, cannibals_right, boat_right):
+        self.missionaries_left = missionaries_left
+        self.cannibals_left = cannibals_left
+        self.boat_left = boat_left
+        self.missionaries_right = missionaries_right
+        self.cannibals_right = cannibals_right
+        self.boat_right = boat_right
+        self.turn = 'left'
+
+    def is_valid(self):
+        if self.missionaries_left < 0 or self.missionaries_right < 0 or self.cannibals_left < 0 or self.cannibals_right < 0:
             return False
-    return True
+        if self.missionaries_left > 3 or self.missionaries_right > 3 or self.cannibals_left > 3 or self.cannibals_right > 3:
+            return False
+        if self.missionaries_left < self.cannibals_left and self.missionaries_left > 0:
+            return False
+        if self.missionaries_right < self.cannibals_right and self.missionaries_right > 0:
+            return False
+        return True
 
-def is_goal_state(state, total_missionaries):
-    # Check if the state is a goal state
-    return state[1] == [total_missionaries, 0]
+    def is_goal(self):
+        return self.missionaries_left == 0 and self.cannibals_left == 0
 
-def generate_next_states(state, moves):
-    # Generate possible next states from the current state
-    next_states = []
-    for move in moves:
-        new_state = [state[0][:], state[1][:]]
-        for i in range(2):
-            new_state[i] = [new_state[i][0] - move[i], new_state[i][1] + move[i]]
-        if is_valid_state(new_state):
-            next_states.append(new_state)
-    return next_states
+    def __str__(self):
+        return f"Missionaries Left: {self.missionaries_left}, Cannibals Left: {self.cannibals_left}, Boat Left: {self.boat_left}, \
+        Missionaries Right: {self.missionaries_right}, Cannibals Right: {self.cannibals_right}, Boat Right: {self.boat_right}"
 
-def solve(total_missionaries, total_cannibals):
-    start_state = [[total_missionaries, total_cannibals], [0, 0]]
-    goal_state = [[0, 0], [total_missionaries, total_cannibals]]
 
-    moves = [(1, 0), (0, 1), (1, 1), (2, 0), (0, 2)]
-
-    stack = [(start_state, [])]
-
-    while stack:
-        current_state, path = stack.pop()
-
-        if current_state == goal_state:
-            return path
-
-        next_states = generate_next_states(current_state, moves)
-
-        for next_state in next_states:
-            if next_state not in path:
-                stack.append((next_state, path + [next_state]))
-
-    return None
-
-def print_solution(path):
-    if path:
-        for i, state in enumerate(path):
-            print(f"Step {i + 1}: {state}")
+def actions(state):
+    possible_actions = []
+    if state.boat_left > 0:
+        for m in range(3):
+            for c in range(3):
+                if 1 <= m + c <= 2:
+                    possible_actions.append((m, c))
     else:
-        print("No solution found.")
+        for m in range(3):
+            for c in range(3):
+                if 1 <= m + c <= 2:
+                    possible_actions.append((-m, -c))
+    return possible_actions
 
-total_missionaries = 3
-total_cannibals = 3
 
-solution_path = solve(total_missionaries, total_cannibals)
-print_solution(solution_path)
+def result(state, action):
+    if state.boat_left > 0:
+        return State(state.missionaries_left - action[0], state.cannibals_left - action[1], state.boat_left - 1,
+                     state.missionaries_right + action[0], state.cannibals_right + action[1], state.boat_right + 1)
+    else:
+        return State(state.missionaries_left + action[0], state.cannibals_left + action[1], state.boat_left + 1,
+                     state.missionaries_right - action[0], state.cannibals_right - action[1], state.boat_right - 1)
+
+
+def minimax(state):
+    if state.is_goal():
+        return 1 if state.turn == 'left' else -1
+    if state.turn == 'left':
+        v = -float('inf')
+        for action in actions(state):
+            new_state = result(state, action)
+            if new_state.is_valid():
+                v = max(v, minimax(new_state))
+        return v
+    else:
+        v = float('inf')
+        for action in actions(state):
+            new_state = result(state, action)
+            if new_state.is_valid():
+                v = min(v, minimax(new_state))
+        return v
+
+
+def get_best_move(state):
+    best_value = -float('inf')
+    best_move = None
+    for action in actions(state):
+        new_state = result(state, action)
+        if new_state.is_valid():
+            value = minimax(new_state)
+            if value > best_value:
+                best_value = value
+                best_move = action
+    return best_move
+
+
+def print_solution(states):
+    for state in states:
+        print(state)
+    print("Solution Found!")
+
+
+def solve():
+    initial_state = State(3, 3, 1, 0, 0, 0)
+    states = [initial_state]
+    while True:
+        move = get_best_move(states[-1])
+        if move is None:
+            break
+        new_state = result(states[-1], move)
+        states.append(new_state)
+        if new_state.is_goal():
+            print_solution(states)
+            break
+
+
+if __name__ == "__main__":
+    solve()
