@@ -1,0 +1,47 @@
+class TicTacToe:
+    def __init__(self):
+        self.board = [' ']*9
+        self.current_player = 'X'
+
+    def print_board(self):
+        for i in range(0, 9, 3):
+            print('|'.join(self.board[i:i+3]))
+            if i < 6:
+                print('-'*5)
+    def make_move(self, position):
+        if self.board[position] == ' ':
+            self.board[position] = self.current_player
+            self.current_player = 'O' if self.current_player == 'X' else 'X'
+            return True
+        else:
+            print("Invalid move! Try again.")
+            return False
+    def check_winner(self):
+        winning_positions = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6), (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]
+        for pos in winning_positions:
+            if self.board[pos[0]] == self.board[pos[1]] == self.board[pos[2]] != ' ':
+                return True, self.board[pos[0]]
+        if ' ' not in self.board:
+            return True, 'Draw'
+        return False, None
+    def play(self):
+        print("Welcome to Tic Tac Toe!")
+        print("Use numbers 1-9 to place your move on the board.\n")
+        self.print_board()
+        while True:
+            position = int(input(f"Player {self.current_player}, enter your move (1-9): ")) - 1
+            if not (0 <= position <= 8):
+                print("Invalid input! Position must be between 1 and 9.")
+                continue
+            if self.make_move(position):
+                self.print_board()
+                game_over, winner = self.check_winner()
+                if game_over:
+                    if winner == 'Draw':
+                        print("It's a draw!")
+                    else:
+                        print(f"Player {winner} wins!")
+                    break
+if __name__ == "__main__":
+    game = TicTacToe()
+    game.play()
